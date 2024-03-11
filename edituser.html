@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="edituser.css">
+    <title>InterProg Update</title>
+    <script>
+        let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+
+        let CheckLogin = () => {
+            if (!UserCreds) {
+                alert("You are not logged in. Redirecting to the login page.");
+                window.location.href = 'login.html';
+            }
+        }
+
+        CheckLogin();
+    </script>
+</head>
+
+<body>
+    <div class="login-box">
+        <p>Update User</p>
+        <form id="MainForm">
+            <!-- EMAIL -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="Email" disabled>
+                <label>Email Used</span></label>
+            </div>
+
+            <!-- FIRST NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="FirstInput" required autocomplete="off">
+                <label>First Name <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- MIDDLE NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="MiddleInput" autocomplete="off">
+                <label>Middle Name</label>
+            </div>
+
+            <!-- LAST NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="LastInput" required autocomplete="off">
+                <label>Last Name <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- SUFFIX NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="SuffixInput" autocomplete="off">
+                <label>Suffix</label>
+            </div>
+
+            <!-- DATE OF BIRTH NAME -->
+            <div class="user-box">
+                <input type="date" class="form-control" id="DoBInput" required autocomplete="off">
+                <label>Date of Birth <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- MOBILE NUMBER NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="MNInput" required autocomplete="off">
+                <label>Mobile Number <span style="color: red;">*</span></label>
+            </div>
+
+            <div class="user-box">
+                <button class="updatepass" id="updatePassword"> Update Password </button>
+            </div>
+
+            <!-- USER IMAGE -->
+            <div class="bottom-box" id="BottomBox">
+                <label for="ImageInput" class="file-label"></label>
+                <input type="file" id="ImageInput" class="file-input" accept="image/png">
+                <img id="ImagePreview" alt="User Image" onclick="document.getElementById('ImageInput').click()">
+            </div>
+
+            <!-- BUTTON NAME -->
+            <a href="#" id="SubmitButton">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                UPDATE
+            </a>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-database.js";
+        import { getAuth, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
+        import { getStorage, ref as storeRef, getDownloadURL, uploadBytes } from 'https://www.gstatic.com/firebasejs/10.7.2/firebase-storage.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0h0MddhCgFWJ5v7BEZF4bcJjtgolJ6FU",
+            authDomain: "interprog-login.firebaseapp.com",
+            databaseURL: "https://interprog-login-default-rtdb.firebaseio.com",
+            projectId: "interprog-login",
+            storageBucket: "interprog-login.appspot.com",
+            messagingSenderId: "820602926344",
+            appId: "1:820602926344:web:3d724e5378e6a914ff68bd"
+        };
+
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+        const auth = getAuth(app);
+        const storage = getStorage();
+        const userUid = UserCreds ? UserCreds.uid : null;
+
+        document.getElementById("SubmitButton").innerText = userUid ? "Update" : "Submit";
+
+        let PopulateUserData = () => {
+            if (userUid) {
+                const userRef = ref(db, 'UsersAuthList/' + userUid);
+
+                get(userRef).then((snapshot) => {
+                    const userData = snapshot.val();
+                    document.getElementById("Email").value = userData.a_Email || '';
+                    document.getElementById("FirstInput").value = userData.c_FirstName || '';
+                    document.getElementById("MiddleInput").value = userData.d_MiddleName || '';
+                    document.getElementById("LastInput").value = userData.e_LastName || '';
+                    document.getElementById("SuffixInput").value = userData.f_Suffix || '';
+                    document.getElementById("DoBInput").value = userData.g_DateOfBirth || '';
+                    document.getElementById("MNInput").value = userData.h_MobileNumber || '';
+    
+                    const storageRef = storeRef(storage, `image-profile/${userUid}.png`);
+                    getDownloadURL(storageRef).then((url) => {
+                        document.getElementById("ImagePreview").src = url;
+                    }).catch((error) => {
+                        console.error('Error retrieving profile image:', error.code, error.message);
+                    });
+                });
+
+            }
+        }
+
+        PopulateUserData();
+
+        async function uploadProfileImage(uid, file) {
+            try {
+                const storageRef = storeRef(storage, `image-profile/${uid}.png`);
+                await uploadBytes(storageRef, file);
+                console.log('Profile image uploaded successfully');
+            } catch (error) {
+                console.error('Error uploading profile image:', error.code, error.message);
+            }
+        }
+
+        function previewPfpImage() {
+            const imageInput = document.getElementById("ImageInput");
+            const imagePreview = document.getElementById("ImagePreview");
+            const bottomBox = document.getElementById("BottomBox");
+
+            if (imageInput.files && imageInput.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                }
+                reader.readAsDataURL(imageInput.files[0]);
+            }
+
+            bottomBox.style.cursor = imageInput.files.length > 0 ? 'default' : 'pointer';
+        }
+
+        let UpdateUser = async (evt) => {
+            evt.preventDefault();
+
+            let MainForm = document.getElementById("MainForm");
+            let FirstInput = document.getElementById("FirstInput");
+            let MiddleInput = document.getElementById("MiddleInput");
+            let LastInput = document.getElementById("LastInput");
+            let SuffixInput = document.getElementById("SuffixInput");
+            let DoBInput = document.getElementById("DoBInput");
+            let MNInput = document.getElementById("MNInput");
+
+            if (userUid) {
+                const userRef = ref(db, 'UsersAuthList/' + userUid);
+
+                get(userRef).then(async (snapshot) => {
+                    const userData = snapshot.val();
+                    const currentEmail = userData.a_Email;
+
+                    await update(ref(db, 'UsersAuthList/' + userUid), {
+                        c_FirstName: FirstInput.value,
+                        d_MiddleName: MiddleInput.value,
+                        e_LastName: LastInput.value,
+                        f_Suffix: SuffixInput.value,
+                        g_DateOfBirth: DoBInput.value,
+                        h_MobileNumber: MNInput.value,
+                    });
+
+                    const pfpUploadFile = document.getElementById("ImageInput").files[0];
+                    if (pfpUploadFile) {
+                        await uploadProfileImage(userUid, pfpUploadFile);
+                    }
+
+                    alert("User updated successfully");
+                    window.location.href = 'index.html';
+                });
+            }
+        }
+
+        document.getElementById("updatePassword").addEventListener('click', (evt) => {
+            evt.preventDefault();
+            const email = Email.value;
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    alert("Password reset email sent! Check your email for instructions.");
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    alert(`Error: ${errorMessage}`);
+                });
+        });
+
+        const imageInput = document.getElementById("ImageInput");
+        imageInput.addEventListener('change', previewPfpImage);
+
+        MainForm.addEventListener('submit', UpdateUser);
+        document.getElementById("SubmitButton").addEventListener('click', UpdateUser);
+    </script>
+
+
+
+</body>
+
+</html>
