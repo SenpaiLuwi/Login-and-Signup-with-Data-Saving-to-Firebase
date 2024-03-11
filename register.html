@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="register.css">
+    <title>InterProg Register</title>
+</head>
+
+<body>
+    <div class="login-box">
+        <p>Register User</p>
+        <form id="MainForm">
+            <!-- FIRST NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="FirstInput" required autocomplete="off">
+                <label>First Name <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- MIDDLE NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="MiddleInput" autocomplete="off">
+                <label>Middle Name</label>
+            </div>
+
+            <!-- LAST NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="LastInput" required autocomplete="off">
+                <label>Last Name <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- SUFFIX NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="SuffixInput" autocomplete="off">
+                <label>Suffix</label>
+            </div>
+
+            <!-- DATE OF BIRTH NAME -->
+            <div class="user-box">
+                <input type="date" class="form-control" id="DoBInput" required autocomplete="off">
+                <label>Date of Birth <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- MOBILE NUMBER NAME -->
+            <div class="user-box">
+                <input type="text" class="form-control" id="MNInput" required autocomplete="off">
+                <label>Mobile Number <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- EMAIL NAME -->
+            <div class="user-box">
+                <input type="email" class="form-control" id="EmailInput" required autocomplete="off">
+                <label>Email Address <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- PASSWORD NAME -->
+            <div class="user-box">
+                <input type="password" class="form-control" id="PasswordInput" required autocomplete="off">
+                <label>Password <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- PASSWORD CONFIRMATION NAME -->
+            <div class="user-box">
+                <input type="password" class="form-control" id="PasswordConfirmInput" required autocomplete="off">
+                <label>Confirm Password <span style="color: red;">*</span></label>
+            </div>
+
+            <!-- BUTTON NAME -->
+            <a href="#" id="SubmitButton">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                Submit
+            </a>
+        </form>
+        <p>Already have an account? <a href="login.html" class="a2">Sign In!</a></p>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+
+    <script type="module">
+        // DOUBLE CHECK!!
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+        import { getDatabase, set, ref } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0h0MddhCgFWJ5v7BEZF4bcJjtgolJ6FU",
+            authDomain: "interprog-login.firebaseapp.com",
+            databaseURL: "https://interprog-login-default-rtdb.firebaseio.com",
+            projectId: "interprog-login",
+            storageBucket: "interprog-login.appspot.com",
+            messagingSenderId: "820602926344",
+            appId: "1:820602926344:web:3d724e5378e6a914ff68bd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+        const auth = getAuth(app);
+
+        let RegisterUser = evt => {
+            evt.preventDefault();
+
+            let MainForm = document.getElementById("MainForm");
+            let FirstInput = document.getElementById("FirstInput");
+            let MiddleInput = document.getElementById("MiddleInput");
+            let LastInput = document.getElementById("LastInput");
+            let SuffixInput = document.getElementById("SuffixInput");
+            let DoBInput = document.getElementById("DoBInput");
+            let MNInput = document.getElementById("MNInput");
+            let EmailInput = document.getElementById("EmailInput");
+            let PasswordInput = document.getElementById("PasswordInput");
+            let PasswordConfirmInput = document.getElementById("PasswordConfirmInput");
+
+            if (PasswordInput.value !== PasswordConfirmInput.value) {
+                alert("Password is NOT the Same");
+                return;
+            }
+
+            createUserWithEmailAndPassword(auth, EmailInput.value, PasswordInput.value)
+                .then((userCredential) => {
+
+                    sendEmailVerification(userCredential.user)
+                        .then(() => {
+                            alert('An email verification has been sent to ' + userCredential.user.email);
+                            window.location.href = 'login.html';
+                        })
+                        .catch((error) => {
+                            var verifyErrCode = error.code;
+                            var verifyErrMsg = error.message;
+                            console.log('VERIFICATION ERROR: ' + verifyErrMsg);
+                        });
+
+
+
+                    set(ref(db, 'UsersAuthList/' + userCredential.user.uid), {
+                        a_Email: EmailInput.value,
+                        b_Password: PasswordInput.value,
+                        c_FirstName: FirstInput.value,
+                        d_MiddleName: MiddleInput.value,
+                        e_LastName: LastInput.value,
+                        f_Suffix: SuffixInput.value,
+                        g_DateOfBirth: DoBInput.value,
+                        h_MobileNumber: MNInput.value
+                    })
+
+                    alert("User Successfully Created");
+
+                })
+
+                .catch((error) => {
+                    alert(error.message);
+                    console.log(error.code);
+                    console.log(error.message);
+                })
+        }
+
+        MainForm.addEventListener('submit', RegisterUser);
+
+        document.getElementById("SubmitButton").addEventListener('click', RegisterUser);
+    </script>
+</body>
+
+</html>
