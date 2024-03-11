@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="icon" href="https://i.imgur.com/B17fjdE.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>KOLEHIYO</title>
+    <script>
+        let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+
+        let CheckLogin = () => {
+            if (!UserCreds) {
+                alert("You are not logged in. Redirecting to the login page.");
+                window.location.href = 'login.html';
+            }
+        }
+
+        CheckLogin();
+    </script>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header>
+        <a class="logo" href="index.html"><img src="https://i.imgur.com/C0ECnvG.jpg" alt="logo"></a>
+        <nav>
+            <ul class="nav__links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="edituser.html">Edit User</a></li>
+            </ul>
+        </nav>
+        <a class="cta" id="signoutbutton" onclick="signOut()">Log Out</a>
+    </header>
+
+    <!-- BACKGROUND -->
+    <div id="background-overlay" class="BackGround"></div>
+
+    <h2 id="msg"></h2>
+    <h2 id="greet"></h2>
+
+    <!-- USER IMAGE -->
+    <div class="bottom-box" id="BottomBox">
+        <label for="ImageInput" class="file-label"></label>
+        <img id="ImagePreview" onclick="document.getElementById('ImageInput').click()">
+    </div>
+
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-database.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-auth.js";
+        import { getStorage, ref as storeRef, getDownloadURL, uploadBytes } from 'https://www.gstatic.com/firebasejs/10.7.2/firebase-storage.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0h0MddhCgFWJ5v7BEZF4bcJjtgolJ6FU",
+            authDomain: "interprog-login.firebaseapp.com",
+            databaseURL: "https://interprog-login-default-rtdb.firebaseio.com",
+            projectId: "interprog-login",
+            storageBucket: "interprog-login.appspot.com",
+            messagingSenderId: "820602926344",
+            appId: "1:820602926344:web:3d724e5378e6a914ff68bd"
+        };
+
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+        const auth = getAuth(app);
+
+        const userUid = UserCreds ? UserCreds.uid : null;
+
+        const GetUserInformation = () => {
+            if (userUid) {
+                const userRef = ref(db, 'UsersAuthList/' + userUid);
+
+                get(userRef).then((snapshot) => {
+                    const userData = snapshot.val();
+                    console.log("UserData:", userData);
+
+                    const userEmail = userData.a_Email;
+                    const userFirstName = userData.c_FirstName || '';
+                    const userMiddleName = userData.d_MiddleName || '';
+                    const userLastName = userData.e_LastName || '';
+                    const userSuffix = userData.f_Suffix || '';
+
+
+
+                    document.getElementById("msg").innerText = `USER ${userEmail} IS LOGGED IN`;
+                    document.getElementById("greet").innerText = `WELCOME ${userFirstName} ${userMiddleName} ${userLastName} ${userSuffix}!`;
+
+                    const storageRef = storeRef(getStorage(), `image-profile/${userUid}.png`);
+                    getDownloadURL(storageRef).then((url) => {
+                        const imagePreview = document.getElementById("ImagePreview");
+                        imagePreview.src = url;
+                        imagePreview.style.display = 'block';
+                    }).catch((error) => {
+                        console.error('Error retrieving profile image:', error.code, error.message);
+                    });
+                });
+            }
+        }
+
+        GetUserInformation();
+
+        document.getElementById("signoutbutton").addEventListener('click', () => {
+            auth.signOut().then(() => {
+                alert("User logged out successfully");
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error("Error signing out:", error);
+            });
+        });
+    </script>
+
+</body>
+
+</html>
