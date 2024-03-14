@@ -130,7 +130,7 @@
                     document.getElementById("SuffixInput").value = userData.f_Suffix || '';
                     document.getElementById("DoBInput").value = userData.g_DateOfBirth || '';
                     document.getElementById("MNInput").value = userData.h_MobileNumber || '';
-    
+
                     const storageRef = storeRef(storage, `image-profile/${userUid}.png`);
                     getDownloadURL(storageRef).then((url) => {
                         document.getElementById("ImagePreview").src = url;
@@ -180,6 +180,11 @@
             let SuffixInput = document.getElementById("SuffixInput");
             let DoBInput = document.getElementById("DoBInput");
             let MNInput = document.getElementById("MNInput");
+
+            if (!FirstInput.value || !LastInput.value || !DoBInput.value || !MNInput.value) {
+                alert("Please fill up all the required fields marked with *");
+                return;
+            }
 
             if (userUid) {
                 const userRef = ref(db, 'UsersAuthList/' + userUid);
