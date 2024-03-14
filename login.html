@@ -62,6 +62,11 @@
         async function SignInUser(evt) {
             evt.preventDefault();
 
+            if (!EmailInput.value || !PasswordInput.value) {
+                alert("Please enter your email and password.");
+                return;
+            }
+
             try {
                 const credentials = await signInWithEmailAndPassword(auth, EmailInput.value, PasswordInput.value);
 
@@ -128,7 +133,7 @@
                     alert("Password reset email sent! Check your email for instructions.");
                 })
                 .catch((error) => {
-                    const errorCode = error.code;SS
+                    const errorCode = error.code; SS
                     const errorMessage = error.message;
                     alert(`Error: ${errorMessage}`);
                 });
